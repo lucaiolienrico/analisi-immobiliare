@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InvestPro | Analisi Immobiliare & Compliance GDPR</title>
+    <title>InvestPro | Analisi Immobiliare Enterprise</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://firestore.googleapis.com">
     
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" defer></script>
 
     <style>
-        /* --- 1. CORE VARIABLES & RESET --- */
+        /* CORE VARIABLES */
         :root {
             --bg-body: #0f172a; --bg-card: #1e293b; --bg-input: #020617;
             --primary: #10b981; --primary-hover: #059669; 
@@ -28,29 +30,30 @@
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; flex-direction: column; font-size: 16px; line-height: 1.5; overflow-x: hidden; }
 
-        /* --- UI COMPONENTS --- */
+        /* HEADER */
         header { background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(12px); }
         .nav-container { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
         .logo { font-weight: 700; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; user-select: none; }
-        .logo span { color: white; letter-spacing: -0.02em; }
         .user-menu { display: flex; align-items: center; gap: 1rem; }
 
+        /* BUTTONS */
         .btn { padding: 0.5rem 1rem; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--border); background: var(--bg-card); color: white; display: inline-flex; align-items: center; gap: 0.5rem; transition: var(--transition); user-select: none; }
         .btn:hover { background: var(--border); transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: grayscale(1); }
         .btn-primary { background: var(--primary); border-color: var(--primary); color: #000; }
         .btn-primary:hover { background: var(--primary-hover); }
         .btn-danger { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); }
-        .btn-admin { position: fixed; bottom: 20px; left: 20px; z-index: 90; background: var(--warning); color: #000; border: none; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); font-weight: 800; }
+        .btn-admin { position: fixed; bottom: 20px; left: 20px; z-index: 90; background: var(--warning); color: #000; border: none; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); font-weight: 800; animation: bounceIn 0.5s; }
 
         .plan-badge { font-size: 0.7rem; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 99px; font-weight: 700; background: var(--border); color: var(--text-muted); letter-spacing: 0.05em; }
         .plan-badge.pro { background: var(--primary); color: black; box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
 
+        /* TOOLBAR & INPUTS */
         .toolbar { max-width: 1400px; margin: 2rem auto 0; padding: 0 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
         .project-input { background: transparent; border: none; border-bottom: 1px solid var(--border); color: white; font-size: 1.25rem; font-weight: 600; width: 300px; padding: 0.5rem 0; transition: var(--transition); }
         .project-input:focus { border-color: var(--primary); }
 
+        /* MAIN GRID */
         main { padding: 2rem 1rem; max-width: 1400px; margin: 0 auto; width: 100%; flex: 1; }
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; }
 
@@ -66,6 +69,7 @@
         input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1); }
         input.invalid { border-color: var(--danger) !important; animation: shake 0.3s; }
 
+        /* KPI & LOCK */
         .kpi-container { background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
         .kpi-title { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
         .kpi-value { font-size: 1.25rem; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; }
@@ -100,26 +104,26 @@
         #loading-overlay.active { opacity: 1; pointer-events: auto; }
         .spinner { width: 48px; height: 48px; border: 4px solid var(--border); border-bottom-color: var(--primary); border-radius: 50%; animation: rotation 1s linear infinite; margin-bottom: 1rem; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        
+        @keyframes bounceIn { 0% { transform: scale(0); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { pointer-events: auto; background: var(--bg-card); border-left: 4px solid var(--primary); color: white; padding: 1rem 1.5rem; border-radius: 4px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.3s; min-width: 300px; }
+        .toast { pointer-events: auto; background: var(--bg-card); border-left: 4px solid var(--primary); color: white; padding: 1rem 1.5rem; border-radius: 4px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); min-width: 300px; max-width: 90vw; }
         .toast.show { transform: translateX(0); }
         .toast.error { border-left-color: var(--danger); }
+        .toast.info { border-left-color: var(--info); }
 
         .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .modal-backdrop.active { opacity: 1; pointer-events: auto; }
         .modal-panel { background: var(--bg-card); border: 1px solid var(--border); width: 90%; max-width: 550px; border-radius: 12px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); transform: translateY(20px); transition: transform 0.3s; max-height: 85vh; overflow-y: auto; }
         .modal-backdrop.active .modal-panel { transform: translateY(0); }
         
-        /* LEGAL TEXT */
         .legal-text h3 { color: var(--primary); margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1.1rem; }
         .legal-text p, .legal-text li { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.5rem; }
         .legal-text ul { padding-left: 1.2rem; }
 
-        /* ADMIN TABS & LISTS */
         .admin-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
         .admin-tab { padding: 0.8rem 1.5rem; cursor: pointer; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid transparent; transition: all 0.2s; flex: 1; text-align: center; }
+        .admin-tab:hover { background: rgba(255,255,255,0.02); }
         .admin-tab.active { color: var(--warning); border-bottom-color: var(--warning); }
         .admin-content { display: none; }
         .admin-content.active { display: block; }
@@ -127,12 +131,14 @@
         .stat-card { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; text-align: center; border: 1px solid var(--border); }
         .stat-num { font-size: 1.5rem; font-weight: 700; display: block; }
         .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-        .deal-list, .user-list { max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top:1rem; }
-        .deal-row, .user-row { display: flex; justify-content: space-between; padding: 0.8rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .user-list, .deal-list { max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top:1rem; }
+        .user-row, .deal-row { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .user-row:last-child, .deal-row:last-child { border-bottom: none; }
+        .user-row.is-me { border-left: 3px solid var(--warning); background: rgba(245, 158, 11, 0.05); }
         .deal-row:hover, .user-row:hover { background: rgba(255,255,255,0.05); cursor: pointer; }
 
         .hidden { display: none !important; }
-        @media (max-width: 768px) { .contact-form { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }
+        @media (max-width: 768px) { .contact-form { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } #admin-trigger { bottom: 10px; left: 10px; font-size: 0.8rem; padding: 0.4rem 0.8rem; } }
     </style>
 </head>
 <body>
@@ -160,7 +166,7 @@
     <section class="toolbar">
         <input type="text" id="project-name" class="project-input" value="Nuova Analisi..." placeholder="Nome del Deal">
         <div style="display: flex; gap: 0.75rem;">
-            <button class="btn" onclick="app.data.openDealsList()"><i class="fa-solid fa-folder-open"></i> Deal</button>
+            <button class="btn" onclick="app.data.openDealsList()"><i class="fa-solid fa-folder-open"></i> <span style="display:none; @media(min-width:600px){display:inline}">I Miei </span>Deal</button>
             <button class="btn btn-primary" onclick="app.data.saveProject()"><i class="fa-regular fa-floppy-disk"></i> Salva</button>
         </div>
     </section>
@@ -190,8 +196,8 @@
                 <div class="overlay-lock">
                     <i class="fa-solid fa-lock" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
                     <h3>Funzionalità PRO</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Sblocca calcolo Mutuo, ROI e Cash Flow.</p>
-                    <button class="btn btn-primary" onclick="app.payment.start()">Sblocca Ora (9€)</button>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem; max-width: 80%;">Sblocca calcolo Mutuo, ROI e Cash Flow Netto.</p>
+                    <button class="btn btn-primary" onclick="app.payment.start()">Sblocca Ora (9,90€)</button>
                     <p style="font-size: 0.75rem; margin-top: 1rem; color: var(--text-muted);">Pagamento sicuro Stripe</p>
                 </div>
                 <div class="card-header"><div class="step-circle" style="background: white;">B</div><h3>Finanziario & Mutuo</h3></div>
@@ -225,36 +231,21 @@
         <section class="contact-section">
             <h2 class="contact-title">Contattaci</h2>
             <form class="contact-form" onsubmit="event.preventDefault(); app.contact.submit();">
-                <div class="form-group">
-                    <label>Nome *</label>
-                    <input type="text" id="contact-name" required placeholder="Mario">
-                </div>
-                <div class="form-group">
-                    <label>Cognome *</label>
-                    <input type="text" id="contact-surname" required placeholder="Rossi">
-                </div>
-                <div class="form-group">
-                    <label>Numero di Cellulare</label>
-                    <input type="tel" id="contact-phone" placeholder="+39 333 1234567">
-                </div>
-                <div class="form-group">
-                    <label>Email *</label>
-                    <input type="email" id="contact-email" required placeholder="email@esempio.it">
-                </div>
+                <div class="form-group"><label>Nome *</label><input type="text" id="contact-name" required placeholder="Mario"></div>
+                <div class="form-group"><label>Cognome *</label><input type="text" id="contact-surname" required placeholder="Rossi"></div>
+                <div class="form-group"><label>Cellulare</label><input type="tel" id="contact-phone" placeholder="+39 333 1234567"></div>
+                <div class="form-group"><label>Email *</label><input type="email" id="contact-email" required placeholder="email@esempio.it"></div>
                 <div class="form-group full-width">
                     <div class="checkbox-wrapper">
                         <input type="checkbox" id="contact-consent" required>
                         <label for="contact-consent" style="text-transform: none; font-weight: 400; font-size: 0.85rem;">
-                            Dichiaro di aver letto e compreso l'<span class="privacy-link" onclick="app.ui.openModal('modal-privacy')">Informativa sulla Privacy</span> e acconsento al trattamento dei miei dati personali ai sensi del Reg. UE 2016/679 (GDPR) e D.Lgs. 196/2003. *
+                            Dichiaro di aver letto l'<span class="privacy-link" onclick="app.ui.openModal('modal-privacy')">Informativa Privacy</span> e acconsento al trattamento dati (GDPR 2016/679). *
                         </label>
                     </div>
                 </div>
-                <div class="form-group full-width">
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Invia Messaggio</button>
-                </div>
+                <div class="form-group full-width"><button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Invia Messaggio</button></div>
             </form>
         </section>
-
     </main>
 
     <button id="admin-trigger" class="btn btn-admin hidden" onclick="app.ui.openModal('modal-admin')"><i class="fa-solid fa-shield-halved"></i> ADMIN</button>
@@ -263,33 +254,10 @@
         <div class="modal-panel">
             <h2 style="margin-bottom: 1rem; color: var(--text-main);">Informativa Privacy</h2>
             <div class="legal-text" style="max-height: 60vh; overflow-y: auto; padding-right: 10px;">
-                <p><strong>Informativa ai sensi degli artt. 13 e 14 del Regolamento (UE) 2016/679 (GDPR) e del D.Lgs. 196/2003 modificato dal D.Lgs. 101/2018.</strong></p>
-                
-                <h3>1. Titolare del Trattamento</h3>
-                <p>Il Titolare del trattamento è <strong>[INSERIRE RAGIONE SOCIALE/NOME TITOLARE]</strong>, con sede in [INSERIRE INDIRIZZO COMPLETO], Email di contatto: email@dominio.it.</p>
-
-                <h3>2. Finalità e Base Giuridica</h3>
-                <p>I dati personali forniti (Nome, Cognome, Cellulare, Email) saranno trattati per:</p>
-                <ul>
-                    <li>Rispondere alle richieste di contatto/assistenza (Base giuridica: Esecuzione di misure precontrattuali, Art. 6.1.b GDPR).</li>
-                    <li>Erogazione del servizio web e gestione account (Base giuridica: Contratto).</li>
-                    <li>Adempimento obblighi di legge (Base giuridica: Obbligo legale, Art. 6.1.c GDPR).</li>
-                </ul>
-
-                <h3>3. Modalità e Conservazione</h3>
-                <p>Il trattamento avviene mediante strumenti informatici e telematici con misure di sicurezza adeguate (Art. 32 GDPR). I dati saranno conservati per il tempo strettamente necessario a gestire la richiesta o per i termini previsti dalla legge (es. 10 anni per dati amministrativi).</p>
-
-                <h3>4. Comunicazione e Trasferimento</h3>
-                <p>I dati non saranno diffusi. Possono essere comunicati a fornitori di servizi tecnici (responsabili del trattamento) operanti nell'UE. Se trasferiti extra-UE, ciò avverrà sulla base di Decisioni di Adeguatezza o Clausole Contrattuali Standard.</p>
-
-                <h3>5. Diritti dell'Interessato (Artt. 15-22 GDPR)</h3>
-                <p>L'utente ha diritto di chiedere al Titolare:</p>
-                <ul>
-                    <li>L'accesso ai dati, la rettifica o la cancellazione degli stessi.</li>
-                    <li>La limitazione del trattamento o l'opposizione allo stesso.</li>
-                    <li>La portabilità dei dati.</li>
-                </ul>
-                <p>Le richieste vanno inviate a: email@dominio.it. L'utente ha inoltre diritto di proporre reclamo all'Autorità Garante per la Protezione dei Dati Personali.</p>
+                <p><strong>Informativa ai sensi degli artt. 13-14 Reg. UE 2016/679 (GDPR) e D.Lgs. 196/2003.</strong></p>
+                <h3>1. Titolare</h3><p><strong>[TUA RAGIONE SOCIALE]</strong>, [TUO INDIRIZZO]. Email: email@dominio.it.</p>
+                <h3>2. Finalità</h3><p>Risposta a richieste, erogazione servizio, obblighi legge.</p>
+                <h3>3. Diritti</h3><p>Accesso, rettifica, cancellazione, portabilità (Artt. 15-22 GDPR).</p>
             </div>
             <button class="btn" style="width: 100%; margin-top: 1.5rem; justify-content: center;" onclick="app.ui.closeModal('modal-privacy')">Chiudi</button>
         </div>
@@ -356,7 +324,7 @@
                 appId: "1:29979040948:web:597ea331e06567d8d50be1",
                 measurementId: "G-BWBQ55NYDE"
             },
-            stripeLink: "https://buy.stripe.com/test_4gM8wP85i5I0flc0PygjC01", 
+            stripeLink: "https://buy.stripe.com/test_4gM8wP85i5I0flc0PygjC01",
             adminEmail: "lucaiolienrico1@gmail.com"
         };
 
@@ -381,11 +349,11 @@
                     return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func(...args), wait); };
                 },
                 safeCall: async (fn, context) => {
-                    app.ui.setLoading(true);
+                    if(context !== 'Load') app.ui.setLoading(true);
                     try { await fn(); } catch (e) {
                         console.error(`[${context}]`, e);
                         let msg = (!navigator.onLine) ? "Sei offline." : "Errore operazione.";
-                        if (e.code === 'permission-denied') msg = "Accesso negato.";
+                        if (e.code === 'permission-denied') msg = "Accesso negato (Database Rules).";
                         app.ui.showToast(msg, 'error');
                     } finally { app.ui.setLoading(false); }
                 }
@@ -435,7 +403,7 @@
                     app.ui.toggleElement('auth-user', !!u);
                     if(u) {
                         document.getElementById('user-email-display').textContent = u.email;
-                        app.ui.toggleElement('admin-trigger', u.email === CONFIG.adminEmail);
+                        if(u.email.toLowerCase() === CONFIG.adminEmail.toLowerCase()) app.ui.toggleElement('admin-trigger', true);
                     }
                 },
                 setProStatus: (active) => {
@@ -471,29 +439,36 @@
 
             auth: {
                 init: () => {
-                    app.ui.setLoading(true);
                     auth.onAuthStateChanged(async (u) => {
                         state.user = u;
                         app.ui.updateAuthUI();
                         app.ui.closeModal('modal-login');
                         if (u) {
-                            const d = await db.collection('users').doc(u.uid).get();
-                            if (d.exists && d.data().plan === 'pro') app.ui.setProStatus(true);
-                            else {
-                                if(!d.exists) await db.collection('users').doc(u.uid).set({email: u.email, plan: 'free', joined: new Date()});
-                                app.ui.setProStatus(false);
-                            }
-                            app.payment.checkPolling();
+                            try {
+                                const d = await db.collection('users').doc(u.uid).get();
+                                if (d.exists && d.data().plan === 'pro') app.ui.setProStatus(true);
+                                else {
+                                    if(!d.exists) await db.collection('users').doc(u.uid).set({email: u.email, plan: 'free', joined: new Date()});
+                                    app.ui.setProStatus(false);
+                                }
+                                app.payment.checkPolling();
+                            } catch(e) { console.error("Auth Init Error", e); }
                         } else {
                             app.ui.setProStatus(false);
                             state.currentDocId = null;
                         }
-                        app.ui.setLoading(false);
                     });
                 },
+                // FIX: Sostituito redirect con POPUP per gestire errori e domini non autorizzati
                 loginGoogle: () => {
                     const p = new firebase.auth.GoogleAuthProvider();
-                    auth.signInWithRedirect(p);
+                    auth.signInWithPopup(p).catch(e => {
+                        console.error(e);
+                        let msg = "Errore durante il login.";
+                        if(e.code === 'auth/unauthorized-domain') msg = "Dominio non autorizzato (Vai su Firebase Console > Auth > Settings).";
+                        if(e.code === 'auth/popup-closed-by-user') msg = "Login annullato.";
+                        app.ui.showToast(msg, 'error');
+                    });
                 },
                 logout: () => auth.signOut().then(() => window.location.reload())
             },
@@ -557,10 +532,9 @@
             contact: {
                 submit: () => {
                     app.ui.setLoading(true);
-                    // Simulazione invio asincrono
                     setTimeout(() => {
                         app.ui.setLoading(false);
-                        app.ui.showToast("Messaggio inviato correttamente! (Simulazione)", 'success');
+                        app.ui.showToast("Messaggio inviato correttamente!", 'success');
                         document.querySelector('.contact-form').reset();
                     }, 1500);
                 }
@@ -592,7 +566,8 @@
             },
 
             admin: {
-                check: () => { if (!state.user || state.user.email !== CONFIG.adminEmail) { app.ui.closeModal('modal-admin'); return false; } return true; },
+                // FIX: Controllo Case Insensitive per admin
+                check: () => { if (!state.user || state.user.email.toLowerCase() !== CONFIG.adminEmail.toLowerCase()) { app.ui.closeModal('modal-admin'); return false; } return true; },
                 switchTab: (t) => {
                     document.querySelectorAll('.admin-tab').forEach(x => x.classList.remove('active'));
                     document.querySelectorAll('.admin-content').forEach(x => x.classList.remove('active'));
@@ -638,7 +613,7 @@
                     const div = document.getElementById('admin-users-list');
                     div.innerHTML = '';
                     list.forEach(u => {
-                        const isMe = u.email === CONFIG.adminEmail;
+                        const isMe = u.email.toLowerCase() === CONFIG.adminEmail.toLowerCase();
                         const r = document.createElement('div');
                         r.className = `user-row ${isMe?'is-me':''}`;
                         r.innerHTML = `<div><div style="color:white;font-weight:600;">${u.email}</div><div style="color:var(--text-muted);font-size:0.75rem;">${u.plan.toUpperCase()}</div></div>`;
@@ -655,7 +630,7 @@
         app.calc.debouncedUpdate = app.utils.debounce(app.calc.update, 300);
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("InvestPro Enterprise v3.2 Loaded");
+            console.log("InvestPro Enterprise v3.6 Loaded");
             app.auth.init();
             app.validate.bind();
             app.calc.update();

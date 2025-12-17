@@ -403,6 +403,7 @@
                     app.ui.toggleElement('auth-user', !!u);
                     if(u) {
                         document.getElementById('user-email-display').textContent = u.email;
+                        // FIX: Case insensitive check per admin
                         if(u.email.toLowerCase() === CONFIG.adminEmail.toLowerCase()) app.ui.toggleElement('admin-trigger', true);
                     }
                 },

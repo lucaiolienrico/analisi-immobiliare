@@ -80,7 +80,7 @@
             align-items: center; 
             gap: 0.8rem; 
             letter-spacing: -0.05em; 
-            text-decoration: none; 
+            text-decoration: none;
         }
         .logo span { color: white; }
 
@@ -250,13 +250,16 @@
         .toast { background: var(--bg-card); border-left: 7px solid var(--primary); color: white; padding: 1.5rem 2.5rem; border-radius: 10px; box-shadow: 0 30px 60px rgba(0,0,0,0.7); transform: translateX(200%); transition: transform 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28); min-width: 380px; }
         .toast.show { transform: translateX(0); }
 
+        /* FIX PDF EXPORT: Stili forzati per la stampa */
         body.pdf-export-mode { background: white !important; color: #020617 !important; }
-        body.pdf-export-mode .card { background: white !important; border: 2px solid #e2e8f0 !important; color: #020617 !important; box-shadow: none !important; }
+        body.pdf-export-mode .card { background: white !important; border: 2px solid #e2e8f0 !important; color: #020617 !important; box-shadow: none !important; margin-bottom: 20px; }
         body.pdf-export-mode .kpi-container { background: #f8fafc !important; border: 2px solid #cbd5e1 !important; color: #020617 !important; }
         body.pdf-export-mode .kpi-value { color: #059669 !important; }
         body.pdf-export-mode input { background: white !important; border: 2px solid #cbd5e1 !important; color: #020617 !important; }
         body.pdf-export-mode .logo span, body.pdf-export-mode h3 { color: #020617 !important; }
         body.pdf-export-mode .step-circle { border: 2px solid #020617 !important; background: transparent !important; color: #020617 !important; }
+        body.pdf-export-mode canvas { max-width: 100%; }
+        body.pdf-export-mode .btn, body.pdf-export-mode .toolbar { display: none !important; }
     </style>
 </head>
 <body>
@@ -725,6 +728,49 @@
                 },
                 loginGoogle: () => app.services.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()),
                 logout: () => app.services.auth.signOut().then(() => window.location.reload())
+            },
+
+            pdf: {
+                generate: async () => {
+                    window.scrollTo(0,0);
+                    app.ui.setLoading(true, "Esportazione PDF...");
+                    await new Promise(r => setTimeout(r, 500));
+                    
+                    document.body.classList.add('pdf-export-mode');
+                    const element = document.getElementById('capture-area');
+                    
+                    try {
+                        const canvas = await html2canvas(element, { scale: 2, useCORS: true, scrollY: -window.scrollY });
+                        document.body.classList.remove('pdf-export-mode');
+                        const imgData = canvas.toDataURL('image/png');
+                        
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        const w = pdf.internal.pageSize.getWidth();
+                        const h = pdf.internal.pageSize.getHeight();
+                        
+                        pdf.setFontSize(22); pdf.setTextColor(16, 185, 129);
+                        pdf.text("INVESTPRO | REPORT ANALISI", 15, 20);
+                        pdf.setFontSize(10); pdf.setTextColor(100);
+                        pdf.text(`Riferimento: ${document.getElementById('project-name').value}`, 15, 28);
+                        pdf.text(`Data: ${new Date().toLocaleDateString()}`, 15, 33);
+                        pdf.line(15, 36, w - 15, 36);
+                        
+                        const imgH = (canvas.height * (w - 20)) / canvas.width;
+                        let heightLeft = imgH;
+                        let position = 40;
+
+                        pdf.addImage(imgData, 'PNG', 10, position, w - 20, imgH);
+                        
+                        pdf.save(`InvestPro_Report.pdf`);
+                        app.ui.showToast("PDF Scaricato con successo", "success");
+                    } catch (e) {
+                        console.error(e);
+                        document.body.classList.remove('pdf-export-mode');
+                        app.ui.showToast("Errore Export PDF", "error");
+                    }
+                    app.ui.setLoading(false);
+                }
             },
 
             data: {

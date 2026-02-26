@@ -1145,20 +1145,14 @@
                 adminEmail: "lucaiolienrico1@gmail.com",
                 stripe: {
                     publicKey: "pk_live_51T0KLCCP1ytB9mXWCxpYFzm9Vvxyq5PQqdvOvD3sHEWPrjSUiSQwL4BK0WqdbwEv3NIM0tosOQTn3GHZWYNG56GY0046BZz2EI",
-                   plans: {
-            monthly: {
-                priceId: "price_1T0KhVCP1ytB9mXWR6roA7uB", 
-                amount: 2990
-            },
-            lifetime: {
-                priceId: "price_1T0KhVCP1ytB9mXW9kBSKwkI", 
-                label: "Accesso A Vita",
-                amount: 19900
-            }
-        }
-    },
-    version: "2.1.0"
-};
+                    plans: {
+                        monthly: { price: 2990, label: "Abbonamento Mensile", id: "PRO_MONTHLY" },
+                        lifetime: { price: 19900, label: "Accesso A Vita", id: "PRO_LIFETIME" }
+                    }
+                },
+                version: "2.1.0"
+            };
+
             // ========================================
             // CITY DATABASE
             // ========================================
@@ -1418,68 +1412,26 @@
                         }
                     },
                     setProStatus: (isPro) => {
- 		   app.state.set('isPro', isPro);
-    
-    		const badge = document.getElementById('plan-badge');
-    		if (badge) {
-        	badge.textContent = isPro ? 'PRO' : 'FREE';
-        	badge.className = isPro ? 'user-plan pro' : 'user-plan free';
-    }
-    
-    		const proCards = document.querySelectorAll('.pro-locked');
-    		proCards.forEach(card => {
-      		  if (isPro) {
-            card.classList.add('unlocked');
-      	  } else {
-            card.classList.remove('unlocked');
-        }
-    });
-    
-    if (isPro) {
-        // Piccolo ritardo per permettere il rendering del DOM
-        setTimeout(() => {
-            if (app.chart && typeof app.chart.init === 'function') {
-                app.chart.init();
-            }
-        }, 100);
-    } else {
-     		if (app.charts) {
-            if (app.charts.revenue) {
-                app.charts.revenue.destroy();
-                app.charts.revenue = null;
-            }
-            if (app.charts.projection) {
-                app.charts.projection.destroy();
-                app.charts.projection = null;
-            }
-        }
-    }
-    
-    		const userPlanSidebar = document.querySelector('.user-plan:not(#plan-badge)');
-    		if (userPlanSidebar) {
-      		  userPlanSidebar.textContent = isPro ? 'PRO' : 'FREE';
-       		 userPlanSidebar.className = isPro ? 'user-plan pro' : 'user-plan free';
-    }
-    
-    		const proButtons = document.querySelectorAll('.pro-feature-btn');
-    		proButtons.forEach(btn => {
-        	if (isPro) {
-            btn.removeAttribute('disabled');
-            btn.classList.remove('disabled');
-        } else {
-            btn.setAttribute('disabled', 'disabled');
-            btn.classList.add('disabled');
-        }
-    });
-    
-    try {
-        const savedState = JSON.parse(localStorage.getItem('investpro_state') || '{}');
-        savedState.isPro = isPro;
-        localStorage.setItem('investpro_state', JSON.stringify(savedState));
-    } catch (e) {
-        console.warn('Could not save PRO status to localStorage', e);
-    }
-}
+                        app.state.set('isPro', isPro);
+                        const badge = document.getElementById('plan-badge');
+                        const proCards = document.querySelectorAll('.pro-locked');
+                        if (badge) {
+                            badge.textContent = isPro ? 'PRO' : 'FREE';
+                            badge.className = isPro ? 'user-plan pro' : 'user-plan free';
+                        }
+                        proCards.forEach(card => isPro ? card.classList.add('unlocked') : card.classList.remove('unlocked'));
+                        if (isPro) app.chart.init();
+                    },
+                    showPaymentStatus: (status, message) => {
+                        const statusEl = document.getElementById('payment-status');
+                        const textEl = document.getElementById('payment-status-text');
+                        if (statusEl && textEl) {
+                            statusEl.className = `payment-status ${status}`;
+                            textEl.textContent = message;
+                        }
+                    }
+                },
+
                 // Auth
                 auth: {
                     setupListener: () => {
@@ -1969,118 +1921,113 @@
                 },
 
                 // Upgrade (Stripe mock, same as original but with event listeners)
-               upgrade: {
-    selectedPlan: null,
-    _checkoutListener: null,
+                upgrade: {
+                    _stripeInstance: null,
+                    _elements: null,
+                    selectedPlan: null,
 
-    showModal: () => {
-        app.upgrade.selectedPlan = null;
-        app.upgrade.resetPlanSelection();
-        app.ui.openModal('modal-upgrade');
-    },
+                    showModal: () => {
+                        app.upgrade.selectedPlan = null;
+                        app.upgrade.resetPlanSelection();
+                        app.ui.openModal('modal-upgrade');
+                    },
 
-    resetPlanSelection: () => {
-        document.querySelectorAll('.plan-card').forEach(card => {
-            card.classList.remove('selected');
-        });
-        app.upgrade.updatePaymentUI();
-    },
+                    resetPlanSelection: () => {
+                        document.querySelectorAll('.plan-card').forEach(card => card.classList.remove('selected'));
+                        app.upgrade.updateStripeUI();
+                    },
 
-    selectPlan: async (planType) => {
-        if (!CONFIG.stripe.plans[planType]) {
-            console.error('Piano non valido:', planType);
-            return;
-        }
-        app.upgrade.selectedPlan = planType;
+                    selectPlan: (planType) => {
+                        if (!CONFIG.stripe.plans[planType]) { console.error('Piano non valido:', planType); return; }
+                        app.upgrade.selectedPlan = planType;
+                        document.querySelectorAll('.plan-card').forEach(card => card.classList.remove('selected'));
+                        document.getElementById(`plan-${planType}`).classList.add('selected');
+                        app.upgrade.updateStripeUI();
+                        const user = app.state.get('user');
+                        if (user) app.upgrade.initStripe();
+                    },
 
-        document.querySelectorAll('.plan-card').forEach(card => card.classList.remove('selected'));
-        document.getElementById(`plan-${planType}`)?.classList.add('selected');
+                    updateStripeUI: () => {
+                        const user = app.state.get('user');
+                        const loginRequiredEl = document.getElementById('paypal-login-required');
+                        const planRequiredEl = document.getElementById('paypal-plan-required');
+                        const buttonWrapperEl = document.getElementById('paypal-button-wrapper');
+                        if (!loginRequiredEl || !buttonWrapperEl) return;
+                        if (!user) {
+                            loginRequiredEl.classList.remove('hidden');
+                            if (planRequiredEl) planRequiredEl.classList.add('hidden');
+                            buttonWrapperEl.classList.add('hidden');
+                        } else if (!app.upgrade.selectedPlan) {
+                            loginRequiredEl.classList.add('hidden');
+                            if (planRequiredEl) planRequiredEl.classList.remove('hidden');
+                            buttonWrapperEl.classList.add('hidden');
+                        } else {
+                            loginRequiredEl.classList.add('hidden');
+                            if (planRequiredEl) planRequiredEl.classList.add('hidden');
+                            buttonWrapperEl.classList.remove('hidden');
+                        }
+                    },
 
-        app.upgrade.updatePaymentUI();
+                    initStripe: async () => {
+                        app.upgrade.updateStripeUI();
+                        const user = app.state.get('user');
+                        if (!user || !app.upgrade.selectedPlan) return;
+                        if (!app.upgrade._stripeInstance) {
+                            app.upgrade._stripeInstance = Stripe(CONFIG.stripe.publicKey);
+                        }
+                        const planConfig = CONFIG.stripe.plans[app.upgrade.selectedPlan];
+                        if (!planConfig) return;
+                        const appearance = { theme: app.state.get('theme') === 'dark' ? 'night' : 'stripe', variables: { colorPrimary: '#10b981' } };
+                        try {
+                            app.upgrade._elements = app.upgrade._stripeInstance.elements({ mode: 'payment', currency: 'eur', amount: planConfig.price, appearance });
+                            const paymentEl = document.getElementById('payment-element');
+                            if (paymentEl) {
+                                paymentEl.innerHTML = '';
+                                const element = app.upgrade._elements.create('payment');
+                                element.mount('#payment-element');
+                            }
+                            const form = document.getElementById('payment-form');
+                            if (form) form.onsubmit = app.upgrade.handleStripeSubmit;
+                        } catch (e) { console.error('Stripe init error:', e); app.toast.show('Errore inizializzazione pagamento', 'error'); }
+                    },
 
-        const user = app.state.get('user');
-        if (!user) {
-            app.toast.show('Devi effettuare il login', 'warning');
-            return;
-        }
+                    handleStripeSubmit: async (e) => {
+                        e.preventDefault();
+                        app.upgrade.setLoading(true);
+                        const user = app.state.get('user');
+                        if (!user) {
+                            app.upgrade.setLoading(false);
+                            app.toast.show('Devi essere loggato per procedere', 'warning');
+                            return;
+                        }
+                        try {
+                            await new Promise(resolve => setTimeout(resolve, 1500)); // simulate
+                            const userRef = app.db.collection('users').doc(user.uid);
+                            const doc = await userRef.get();
+                            if (doc.exists) await userRef.update({ plan: 'pro' });
+                            else await userRef.set({ email: user.email, plan: 'pro', joined: firebase.firestore.FieldValue.serverTimestamp(), version: CONFIG.version });
+                            app.ui.setProStatus(true);
+                            app.updateAuthUI(user);
+                            app.toast.show('Pagamento completato! Benvenuto PRO!', 'success');
+                            app.upgrade.setLoading(false);
+                            setTimeout(() => app.ui.closeModal('modal-upgrade'), 2000);
+                        } catch (err) {
+                            console.error('Payment error:', err);
+                            app.upgrade.setLoading(false);
+                            app.toast.show('Errore durante il pagamento: ' + (err.message || 'Errore sconosciuto'), 'error');
+                        }
+                    },
 
-        app.ui.showPaymentStatus('processing', 'Preparazione del pagamento...');
-
-        try {
-            // Riferimento alla collezione checkout_sessions per l'utente
-            const checkoutSessionsRef = app.db
-                .collection('customers')
-                .doc(user.uid)
-                .collection('checkout_sessions');
-
-            const priceId = CONFIG.stripe.plans[planType].priceId;
-            const checkoutData = {
-                price: priceId,
-                success_url: window.location.origin + '/success.html',
-                cancel_url: window.location.origin + '/cancel.html',
-            };
-
-            if (planType === 'lifetime') {
-                checkoutData.mode = 'payment';
-            }
-
-            // Crea il documento in Firestore
-            const docRef = await checkoutSessionsRef.add(checkoutData);
-
-            // Pulisci eventuale listener precedente
-            if (app.upgrade._checkoutListener) {
-                app.upgrade._checkoutListener();
-            }
-
-            // Ascolta i cambiamenti del documento creato
-            app.upgrade._checkoutListener = docRef.onSnapshot((doc) => {
-                const data = doc.data();
-                if (!data) return;
-
-                if (data.error) {
-                    app.ui.showPaymentStatus('error', 'Errore: ' + data.error.message);
-                    app.toast.show('Errore durante la creazione del pagamento', 'error');
-                    return;
-                }
-
-                if (data.url) {
-                    app.ui.showPaymentStatus('success', 'Reindirizzamento a Stripe...');
-                    window.location.assign(data.url);
-                }
-            });
-
-        } catch (error) {
-            console.error('Errore durante la creazione della sessione di checkout:', error);
-            app.ui.showPaymentStatus('error', 'Impossibile avviare il pagamento. Riprova.');
-            app.toast.show('Errore di connessione', 'error');
-        }
-    },
-
-    updatePaymentUI: () => {
-        const user = app.state.get('user');
-        const loginRequiredEl = document.getElementById('paypal-login-required');
-        const planRequiredEl = document.getElementById('paypal-plan-required');
-        const buttonWrapperEl = document.getElementById('paypal-button-wrapper');
-
-        if (!loginRequiredEl || !buttonWrapperEl) return;
-
-        if (!user) {
-            loginRequiredEl.classList.remove('hidden');
-            if (planRequiredEl) planRequiredEl.classList.add('hidden');
-            buttonWrapperEl.classList.add('hidden');
-        } else if (!app.upgrade.selectedPlan) {
-            loginRequiredEl.classList.add('hidden');
-            if (planRequiredEl) planRequiredEl.classList.remove('hidden');
-            buttonWrapperEl.classList.add('hidden');
-        } else {
-            loginRequiredEl.classList.add('hidden');
-            if (planRequiredEl) planRequiredEl.classList.add('hidden');
-            buttonWrapperEl.classList.remove('hidden');
-        }
-    },
-
-    // Le funzioni vecchie (initStripe, handleStripeSubmit, setLoading) vanno eliminate.
-},
+                    setLoading: (isLoading) => {
+                        const btn = document.getElementById('submit');
+                        const spinner = document.getElementById('spinner');
+                        const txt = document.getElementById('button-text');
+                        if (!btn) return;
+                        btn.disabled = isLoading;
+                        if (spinner) spinner.classList.toggle('hidden', !isLoading);
+                        if (txt) txt.textContent = isLoading ? 'Elaborazione...' : 'Paga Ora';
+                    }
+                },
 
                 // Admin
                 admin: {

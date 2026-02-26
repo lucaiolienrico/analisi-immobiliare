@@ -1418,26 +1418,68 @@
                         }
                     },
                     setProStatus: (isPro) => {
-                        app.state.set('isPro', isPro);
-                        const badge = document.getElementById('plan-badge');
-                        const proCards = document.querySelectorAll('.pro-locked');
-                        if (badge) {
-                            badge.textContent = isPro ? 'PRO' : 'FREE';
-                            badge.className = isPro ? 'user-plan pro' : 'user-plan free';
-                        }
-                        proCards.forEach(card => isPro ? card.classList.add('unlocked') : card.classList.remove('unlocked'));
-                        if (isPro) app.chart.init();
-                    },
-                    showPaymentStatus: (status, message) => {
-                        const statusEl = document.getElementById('payment-status');
-                        const textEl = document.getElementById('payment-status-text');
-                        if (statusEl && textEl) {
-                            statusEl.className = `payment-status ${status}`;
-                            textEl.textContent = message;
-                        }
-                    }
-                },
-
+ 		   app.state.set('isPro', isPro);
+    
+    		const badge = document.getElementById('plan-badge');
+    		if (badge) {
+        	badge.textContent = isPro ? 'PRO' : 'FREE';
+        	badge.className = isPro ? 'user-plan pro' : 'user-plan free';
+    }
+    
+    		const proCards = document.querySelectorAll('.pro-locked');
+    		proCards.forEach(card => {
+      		  if (isPro) {
+            card.classList.add('unlocked');
+      	  } else {
+            card.classList.remove('unlocked');
+        }
+    });
+    
+    if (isPro) {
+        // Piccolo ritardo per permettere il rendering del DOM
+        setTimeout(() => {
+            if (app.chart && typeof app.chart.init === 'function') {
+                app.chart.init();
+            }
+        }, 100);
+    } else {
+     		if (app.charts) {
+            if (app.charts.revenue) {
+                app.charts.revenue.destroy();
+                app.charts.revenue = null;
+            }
+            if (app.charts.projection) {
+                app.charts.projection.destroy();
+                app.charts.projection = null;
+            }
+        }
+    }
+    
+    		const userPlanSidebar = document.querySelector('.user-plan:not(#plan-badge)');
+    		if (userPlanSidebar) {
+      		  userPlanSidebar.textContent = isPro ? 'PRO' : 'FREE';
+       		 userPlanSidebar.className = isPro ? 'user-plan pro' : 'user-plan free';
+    }
+    
+    		const proButtons = document.querySelectorAll('.pro-feature-btn');
+    		proButtons.forEach(btn => {
+        	if (isPro) {
+            btn.removeAttribute('disabled');
+            btn.classList.remove('disabled');
+        } else {
+            btn.setAttribute('disabled', 'disabled');
+            btn.classList.add('disabled');
+        }
+    });
+    
+    try {
+        const savedState = JSON.parse(localStorage.getItem('investpro_state') || '{}');
+        savedState.isPro = isPro;
+        localStorage.setItem('investpro_state', JSON.stringify(savedState));
+    } catch (e) {
+        console.warn('Could not save PRO status to localStorage', e);
+    }
+}
                 // Auth
                 auth: {
                     setupListener: () => {
